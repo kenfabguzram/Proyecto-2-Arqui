@@ -7,6 +7,134 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Si se vna a realizar nuevas macros para un proyecto definirlas aca
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	;objetivo de la macro: captura un dato ASCII ingresado por teclado por parte del usuario y almacena la entrada en la variable de memoria "coordenadas"
+	;ejemplo de funcionamiento: divideCordenadas
+	;ejemplo de uso:	    divideCoordenadas
+        %macro divideCoordenadas 0
+		xor edx,edx				; Limpia registro edx		
+		mov edx, coordenadas
+		
+		mov al, byte [edx]
+		mov byte [coordenadaFila],al
+		
+		add edx,2
+		
+		mov al, byte [edx]
+		mov byte [coordenadaColumna],al
+		
+		add edx,2
+		
+		mov al, byte [edx]
+		mov byte [numeral],al
+        %endmacro
+	
+	;objetivo de la macro: captura un dato ASCII ingresado por teclado por parte del usuario y almacena la entrada en la variable de memoria "coordenadas"
+	;ejemplo de funcionamiento: leeCoordenadas
+	;ejemplo de uso:	    leeCoordenadas
+        %macro leeCoordenadas 0
+                mov     eax,     sys_read      ; opción 3 de las interrupciones del kernel.
+                mov     ebx,     stdin         ; standar input.
+                mov     ecx,     coordenadas       ; dirección de memoria reservada para almacenar la entrada del teclado.
+                mov     edx,     16             ; número de bytes a leer.
+                int     0x80
+        %endmacro
+	
+        %macro ocultarVariable 0
+       		.VOLVER_A_OCULTAR:
+       		random rand, 1,9
+       		numeroAAscii rand
+       		
+       		mov al,byte[rand]
+		cmp al,byte[msgEspacio0x0]
+		je .BLANQUEA1
+		cmp al,byte[msgEspacio0x1]
+		je .BLANQUEA2
+		cmp al,byte[msgEspacio0x2]
+		je .BLANQUEA3
+		cmp al,byte[msgEspacio1x0]
+		je .BLANQUEA4
+		cmp al,byte[msgEspacio1x1]
+		je .BLANQUEA5
+		cmp al,byte[msgEspacio1x2]
+		je .BLANQUEA6
+		cmp al,byte[msgEspacio2x0]
+		je .BLANQUEA7
+		cmp al,byte[msgEspacio2x1]
+		je .BLANQUEA8
+		cmp al,byte[msgEspacio2x2]
+		je .BLANQUEA9
+		jmp .VOLVER_A_OCULTAR
+		
+		.BLANQUEA1:
+			mov bl,' '
+			mov byte[msgEspacio0x0],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA2:
+			mov bl,' '
+			mov byte[msgEspacio0x1],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA3:
+			mov bl,' '
+			mov byte[msgEspacio0x2],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA4:
+			mov bl,' '
+			mov byte[msgEspacio1x0],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA5:
+			mov bl,' '
+			mov byte[msgEspacio1x1],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA6:
+			mov bl,' '
+			mov byte[msgEspacio1x2],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA7:
+			mov bl,' '
+			mov byte[msgEspacio2x0],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA8:
+			mov bl,' '
+			mov byte[msgEspacio2x1],bl
+			jmp .FINALDESCARTE
+		.BLANQUEA9:
+			mov bl,' '
+			mov byte[msgEspacio2x2],bl
+		.FINALDESCARTE:	
+        %endmacro
+	;objetivo de la macro: transfiere el contenido del primer parametro de valor numerico a ascii
+        ;ejemplo de funcionamiento: numeroAAscii variableMemoria
+        ;ejemplo de uso: numeroAAscii numeroLetrasUnidades
+        %macro inicializarVariables 1
+        	mov eax, %1
+        	mov cl, byte[eax]
+		mov [msgEspacio0x0], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio0x1], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio0x2], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio1x0], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio1x1], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio1x2], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio2x0], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio2x1], cl
+		inc eax
+		mov cl, byte[eax]
+		mov [msgEspacio2x2], cl
+        %endmacro
 	;objetivo de la macro: transfiere el contenido del primer parametro de valor numerico a ascii
         ;ejemplo de funcionamiento: numeroAAscii variableMemoria
         ;ejemplo de uso: numeroAAscii numeroLetrasUnidades
@@ -46,144 +174,28 @@
 	;objetivo de la macro: avanzar la cantidad de espacios del tercer parametro, en el string del segundo parametro y almacenar la 		palabra en el primer parametro
         ;ejemplo de funcionamiento: obtenerPalabra variable, archivoAbierto, cantidadEspacios
         ;ejemplo de uso:            obtenerPalabra palabra,archivoTXT,  24
-        %macro obtenerPalabra 3
+        %macro obtenerCombinacion 3
         
-		xor ecx,ecx				; Limpia registro ecx
-		xor edx,edx				; Limpia registro edx
-		mov edx, %1
-		mov ecx, %2
-		mov eax, %3
-		add ecx, eax
+		xor rcx,rcx				; Limpia registro ecx
+		xor rdx,rdx				; Limpia registro edx
+		mov rdx, %1
+		mov rcx, %2
+		mov rax, %3
+		add rcx, rax
         	.REPITA3:
-                	mov al, byte [ecx]
-                	mov byte [edx], al
-                	inc ecx
-                	inc edx
+                	mov al, byte [rcx]
+                	mov byte [rdx], al
+                	inc rcx
+                	inc rdx
                 	cmp  cl,'\r'
                 	jne .REPITA3
-                mov al, byte [ecx]
-                mov byte [edx], al
-                mov al,'0'
-                mov byte [edx], al
-                
-			
+                ;mov al, byte [ecx]
+                ;mov byte [edx], al
+                ;mov al,'0'
+                ;mov byte [edx], al
+                	
         %endmacro
-        ;objetivo de la macro: generar los reglones en la variable del primer parametro
-        ;ejemplo de funcionamiento: generarReglones variable, archivoAbierto, cantidadEspacios
-        ;ejemplo de uso:            generarReglones palabra,archivoTXT,  24
-        %macro generarReglones 2
-		xor ecx,ecx				; Limpia registro ecx
-		xor edx,edx				; Limpia registro edx		
-		mov edx, %1
-		mov ecx, %2
-        	.REPITA5:
-                	mov byte [edx], '_'
-                	inc edx
-                	mov byte [edx], ' '
-                	inc edx
-                	loop .REPITA5
-                	mov al,'0'
-                	mov byte [edx], al	
-        %endmacro
-        ;objetivo de la macro: Inicializar la variable de las letras solicitadas
-        ;ejemplo de funcionamiento: inicializarLetrasSolicitadas variable, contador
-        ;ejemplo de uso:            inicializarLetrasSolicitadas letrasSolicitadas,12
-        %macro inicializarLetrasSolicitadas 2
-        	
-		xor ecx,ecx				; Limpia registro ecx
-		xor edx,edx				; Limpia registro edx		
-		mov edx, %1
-		mov ecx, %2
-        	.REPITA6:
-                	mov byte [edx], ' '
-                	inc edx
-                	mov byte [edx], ','
-                	inc edx
-                	loop .REPITA6
-                mov al,'0'
-                mov byte [edx], al	
-        %endmacro
-        ;objetivo de la macro: Inicialiar los turnos disponibles
-        ;ejemplo de funcionamiento: inicializarTurnosDisponibles variable, valor inmediato
-        ;ejemplo de uso:            inicializarTurnosDisponibles turnosDisponibles,12
-        %macro inicializarTurnosDisponibles 2
-        	mov edx,%2
-        	mov [%1],edx	
-        %endmacro
-        ;objetivo de la macro: Actualizar Letras Solicitadas
-        ;ejemplo de funcionamiento: actualizarLetrasSolicitadas letraSolicitada, variable
-        ;ejemplo de uso:            actualizarLetrasSolicitadas entrada, letrasSolicitadas
-        %macro actualizarLetrasSolicitadas 2				
-		xor eax,eax
-		xor ebx,ebx				; Limpia registros
-		mov ebx, %1
-		mov eax, %2
-        	.REPITA7:
-                	cmp byte [eax],' '
-                	je .REPITA9
-                	jne .REPITA8
-                .REPITA8:
-                	inc eax
-                	cmp byte [eax],' '
-                	jne .REPITA8
-                	je .REPITA9
-                .REPITA9:
-                	mov dl, byte [ebx]
-                	mov byte [eax], dl 		
-        %endmacro
-        ;objetivo de la macro: Actualizar la palabra oculta dependiendo de lo que escriba el usuario
-        ;ejemplo de funcionamiento: actualizarPalabraOculta 
-        ;ejemplo de uso:            actualizarPalabraOculta 
-        %macro actualizarPalabraOculta 0
-        	
-        	xor ecx,ecx				
-		xor eax,eax
-		xor ebx,ebx
-		xor esi,esi				; Limpia registros
-		mov al,byte [entrada]
-		mov ebx, palabra
-		mov edx, palabraOculta
-        	cmp al,byte[ebx]
-        	
-        	je .REPITA11
-        	.REPITA10:
-        		inc ebx
-        		cmp byte[ebx],'0'
-        		je .REPITA12
-        		add edx,2
-        		cmp al,byte[ebx]
-        		jne .REPITA10
-        	.REPITA11:
-        		mov byte[edx],al
-        		jmp .REPITA10 
-        	.REPITA12:      		
-        %endmacro
-        
-        ;objetivo de la macro: Validar si el jugador gano
-        ;ejemplo de funcionamiento: validar_gane
-        ;ejemplo de uso:            validar_gane 
-        
-        %macro validar_gane 0
-		mov edx, palabraOculta
-		.REPITA13:
-			cmp byte [edx],'_'
-			je .PIERDE
-			jne .REPITA14
-		.REPITA14:
-			cmp byte [edx],'0'
-			je .GANADOR
-			inc edx
-			cmp byte [edx],'_'
-			je .PIERDE
-			jne .REPITA14
-		.GANADOR:
-			mov byte[gano],'1'
-			jmp .TERMINA
-		.PIERDE:
-			mov byte[gano],'0'
-			jmp .TERMINA
-		.TERMINA:
-	%endmacro
+
       	;objetivo de la macro: multiplicar un valor en una variable por un valor constante
         ;ejemplo de funcionamiento: multiplicar variable, numero
         ;ejemplo de uso:            multiplicar espacios, 5
