@@ -18,13 +18,19 @@ section .data
 			db ' 			1. Iniciar Juego',10
 			db ' 			2. Salir',10
 	lenMsgMenu	equ $ - msgMenu
+	
+	msgMenu2		db '	       		Bienvenido al Juego de Sudoku',10,10
+		        db '			Seleccione una opcion:',10
+			db ' 			1. Jugar nuevamente',10
+			db ' 			2. Salir',10
+	lenMsgMenu2	equ $ - msgMenu2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	msgBienvenida     db '	       		Bienvenido al Juego de Sudoku',10,10
 
         lenMsgBienvenida  equ $ - msgBienvenida
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         
-        msgFinalPerdio         db '                    HAS PERDIDO...'
+        msgFinalPerdio         db '                    TIEMPO AGOTADO, HAS PERDIDO...',10,10
         lenMsgFinalPerdio      equ $ - msgFinalPerdio
         
         msgFinalGane         db '                    HAS GANADO!!!!!'
@@ -49,9 +55,55 @@ section .data
         lenMsgFinalFila      equ $ - msgFinalFila
        
        
-       	msgIntroCoordenadas         db 'Coordenadas: '
+       	msgIntroCoordenadas         db 'Ingrese las coordenadas y el valor por ingresar(fila,columna,valor): '
         lenMsgIntroCoordenadas      equ $ - msgIntroCoordenadas
         
+        
+        msgInicialTiempoRestante         db 'Tiempo restante: '
+        lenMsgInicialTiempoRestante     equ $ - msgInicialTiempoRestante
+        
+        msgCero         db '0'
+        lenMsgCero     equ $ - msgCero
+        
+        tiempoTotal     dd      120
+        
+        msgS       db ' s'
+        lenMsgS     equ $ - msgS
+        
+        msgInicialMensaje        db 'Mensaje: '
+        lenMsgInicialMensaje     equ $ - msgInicialMensaje
+        
+        
+        msgDivision        db '----------------------------------------------------------------------------------------------------------'
+        lenMsgDivision    equ $ - msgDivision
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Validaciones;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	msgNumeroRepetido        db 'Numero repetido'
+        lenMsgNumeroRepetido     equ $ - msgNumeroRepetido
+        
+        msgCoordenadaInvalida        db 'Coordenada invalida'
+        lenMsgCoordenadaInvalida     equ $ - msgCoordenadaInvalida
+        
+        msgCoordenadaLlena        db 'Coordenada llena'
+        lenMsgCoordenadaLlena     equ $ - msgCoordenadaLlena
+        
+        msgNumeroInvalido        db 'Numero debe ser un digito entero'
+        lenMsgNumeroInvalido     equ $ - msgNumeroInvalido
+        
+        
+        msgSumaNoValida        db 'La suma de los numeros en el tablero no es equivalente a 15'
+        lenMsgSumaNoValida     equ $ - msgSumaNoValida
+        
+        msgSumaDeCoordenadasInvalida        db 'Suma de coordenadas es diferente de 15'
+        lenMsgSumaDeCoordenadasInvalida     equ $ - msgSumaDeCoordenadasInvalida
+        
+        msgFueraDeTiempo        db 'Fuera de tiempo'
+        lenMsgFueraDeTiempo     equ $ - msgFueraDeTiempo
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;        
+        msgEsc        db 'Presione la tecla ESC para salir'
+        lenMsgEsc     equ $ - msgEsc
+        
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         combinaciones dq 'combinaciones.txt',0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         msgEnter       db ' ',10,10
@@ -82,12 +134,22 @@ section .bss                                               ; Segmento de Datos n
 	coordenadaFila		resb 4
 	coordenadaColumna	resb 4
 	numeral			resb 4
-	
+	mensaje			resb 128
+	tiempo1 		resd 1                 			 ; Variable tiempo1 para almacenar el primer tiempo
+	tiempo2			resd 1					 ; Variable tiempo2 para almacenar el segundo tiempo
+	tiempoTranscurrido	resb 4
 	contenidoArchivo  	resb 360	   ; Reserva espacio para 255 bytes
 	espacios 		resb 4
 	combinacion 		resb 9
+	combinacionResultante	resb 9
 	rand			resb 4
 	contador		resb 4
+	unidades		resb 4
+	decenas			resb 4
+	centenas		resb 4
+	errores			resb 4
+	gane			resb 4
+	numerosAgregados	resb 4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -105,13 +167,17 @@ _start:
 	je FIN
 	cmp byte [entrada],'1'
 	jne _start
+	
 	abreArchivo combinaciones
         leeArchivo contenidoArchivo
-        random espacios,0,11
+        random espacios,0,7
         multiplicar espacios,10	
         obtenerCombinacion combinacion,contenidoArchivo,[espacios]
+        obtenerCombinacion2 combinacion, combinacionResultante
         cierraArchivo combinaciones
+        JUGAR:
 	inicializarVariables combinacion
+	
 	OCULTAR_VARIABLEA:
 		ocultarVariable
 	OCULTAR_VARIABLEB:
@@ -122,8 +188,15 @@ _start:
 		ocultarVariable
 	OCULTAR_VARIABLEE:
 		ocultarVariable
+	actualizarCombinacion
+	iniciarCronometro
 	
-	
+	xor eax, eax
+	mov eax,0
+	mov [errores],eax
+	xor eax, eax
+	mov eax,0
+	mov [numerosAgregados],eax
 MENU_OPCION1:
 	imprimeEnPantalla msgBienvenida, lenMsgBienvenida
 	imprimeEnPantalla msgNumerosColumna,lenMsgNumerosColumna
@@ -160,17 +233,93 @@ MENU_OPCION1:
 	
 	imprimeEnPantalla msgIntroCoordenadas,lenMsgIntroCoordenadas
 	leeCoordenadas
-	imprimeEnPantalla numeral, 1
 	divideCoordenadas
 	
+	imprimeEnPantalla msgInicialTiempoRestante, lenMsgInicialTiempoRestante
+	actualizarCronometro
+	cmp dword[tiempoTranscurrido],0
+	je PERDIO
+	divideTiempoTranscurrido
+	numeroAAscii unidades
+	numeroAAscii decenas
+	numeroAAscii centenas
+	cmp byte[centenas],'2'
+	je PERDIO
+	imprimeEnPantalla centenas,1
+	imprimeEnPantalla decenas,1
+	imprimeEnPantalla unidades,1
+	imprimeEnPantalla msgS,lenMsgS
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgInicialMensaje, lenMsgInicialMensaje
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	validarRepeticion
+	validarCoordenadaInvalida
+	validarCoordenadaLlena
+	VALIDA_NUMERAL:
+	validarNumeralValido
 	
-
+	cmp byte[errores],0
+	je AGREGAR_NUMEROS
+	xor eax, eax
+	mov eax,0
+	mov [errores],eax
+	TERMINO_DE_AGREGAR_NUMEROS:
+	;aqui se imprime el mensaje
+	imprimeEnPantalla msgEsc, lenMsgEsc
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgDivision,lenMsgDivision
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	jmp MENU_OPCION1
+AGREGAR_NUMEROS:
+	agregarNumeros
+	incrementarVariableNumerica numerosAgregados
+	cmp byte[numerosAgregados],5
+	je VALIDO_EL_GANE_FINAL
+	jne TERMINO_DE_AGREGAR_NUMEROS
+VALIDO_EL_GANE_FINAL:
+	xor eax, eax
+	mov eax,0
+	mov [numerosAgregados],eax
+	xor eax, eax
+	mov eax,0
+	mov [gane],eax
+	validarGaneFinal
+	cmp byte[gane],1
+	je GANO
+	jmp TERMINO_DE_AGREGAR_NUMEROS
 GANO:
+
 	imprimeEnPantalla msgFinalGane,lenMsgFinalGane
-	jmp FIN
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgEsc, lenMsgEsc
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgDivision,lenMsgDivision
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	jmp LOOP_PERDIDA
 PERDIO:
+	imprimeEnPantalla msgCero,lenMsgCero
+	imprimeEnPantalla msgCero,lenMsgCero
+	imprimeEnPantalla msgCero,lenMsgCero
+	imprimeEnPantalla msgS,lenMsgS
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgInicialMensaje, lenMsgInicialMensaje
+	imprimeEnPantalla msgEnter,lenMsgEnter
 	imprimeEnPantalla msgFinalPerdio,lenMsgFinalPerdio
-	jmp FIN
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgEsc, lenMsgEsc
+	imprimeEnPantalla msgEnter,lenMsgEnter
+	imprimeEnPantalla msgDivision,lenMsgDivision
+	imprimeEnPantalla msgEnter,lenMsgEnter
+LOOP_PERDIDA:
+	imprimeEnPantalla msgMenu2, lenMsgMenu2
+	
+	leeTeclado
+	cmp byte [entrada],'2'
+	je FIN
+	cmp byte [entrada],'1'
+	je JUGAR
+	jmp LOOP_PERDIDA
+
 
 FIN:	
 	salir

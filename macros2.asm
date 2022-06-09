@@ -7,7 +7,427 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Si se vna a realizar nuevas macros para un proyecto definirlas aca
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	%macro inicializaVariableNumerica 1
+		xor eax, eax
+		mov eax,0
+		mov [%1],eax
+	%endmacro
+	%macro incrementarVariableNumerica 1
+		xor eax, eax
+		mov eax,[%1]
+		inc eax
+		mov [%1],eax
+	%endmacro
+	%macro iniciarCronometro 0
+		mov  eax, 13       					;Interrupcion que toma el primer tiempo EPOCH 
+		xor rbx,rbx
+		int  0x80
 
+		mov dword [tiempo1],eax
+	%endmacro
+	%macro actualizarCronometro 0
+		mov  eax, 13       					;Interrupcion que toma el primer tiempo EPOCH 
+		xor rbx,rbx
+		int  0x80
+
+		mov dword [tiempo2],eax
+		xor rcx,rcx                                             ; Limpia registro ecx
+        	xor rdx,rdx                                             ; Limpia registro edx
+        	xor rax,rax                                             ; Limpia registro eax
+
+		mov ebx,dword [tiempo1]					;Se asigna ebx=tiempo1	
+		mov eax,dword [tiempo2]					;Se asigna eax=tiempo2
+		mov cl,byte [tiempoTotal]				;cl=120 (cantidad de 120s)
+		sub eax,ebx						;Obtiene el delta en segundos (tiempo2-tiempo1)
+		sub ecx,eax						;Resta 120 - (tiempo2-tiempo1)
+		mov [tiempoTranscurrido],ecx
+	%endmacro
+	%macro divideTiempoTranscurrido 0
+		xor edx,edx
+		mov eax, [tiempoTranscurrido]
+		mov ecx,10
+		div ecx
+		mov [unidades],edx
+		
+		xor edx,edx
+		div ecx
+		mov [decenas],edx
+		
+		xor edx,edx
+		div ecx
+		mov [centenas],edx
+	%endmacro
+	%macro validarNumeralValido 0
+		mov al, byte[numeral]
+		cmp al,'1'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'2'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'3'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'4'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'5'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'6'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'7'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'8'
+		je .TERMINA_VALIDA_REPETICION
+		cmp al,'9'
+		je .TERMINA_VALIDA_REPETICION
+		imprimeEnPantalla msgNumeroInvalido,lenMsgNumeroInvalido
+		imprimeEnPantalla msgEnter,lenMsgEnter
+		incrementarVariableNumerica errores
+		.TERMINA_VALIDA_REPETICION:
+        %endmacro
+        
+	%macro validarRepeticion 0
+		mov al, byte[numeral]
+		cmp al,byte[msgEspacio0x0]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio0x1]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio0x2]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio1x0]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio1x1]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio1x2]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio2x0]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio2x1]
+		je .SE_REPITE
+		cmp al,byte[msgEspacio2x2]
+		je .SE_REPITE
+		jmp .TERMINA_VALIDA_REPETICION
+		.SE_REPITE:
+			imprimeEnPantalla msgNumeroRepetido,lenMsgNumeroRepetido
+			imprimeEnPantalla msgEnter,lenMsgEnter
+			incrementarVariableNumerica errores
+		.TERMINA_VALIDA_REPETICION:
+        %endmacro
+	%macro validarCoordenadaInvalida 0
+		cmp byte[coordenadaFila],'0'
+		je .VALIDACIONCOLUMNA
+		cmp byte[coordenadaFila],'1'
+		je .VALIDACIONCOLUMNA
+		cmp byte[coordenadaFila],'2'
+		je .VALIDACIONCOLUMNA
+		jmp .COORDENADA_INVALIDA
+		.VALIDACIONCOLUMNA:
+			cmp byte[coordenadaColumna],'0'
+			je .TERMINA_VALIDA_COORDENADA_INVALIDA
+			cmp byte[coordenadaColumna],'1'
+			je .TERMINA_VALIDA_COORDENADA_INVALIDA
+			cmp byte[coordenadaColumna],'2'
+			je .TERMINA_VALIDA_COORDENADA_INVALIDA
+		.COORDENADA_INVALIDA:
+			imprimeEnPantalla msgCoordenadaInvalida,lenMsgCoordenadaInvalida
+			imprimeEnPantalla msgEnter,lenMsgEnter
+			incrementarVariableNumerica errores
+		.TERMINA_VALIDA_COORDENADA_INVALIDA:
+			
+        %endmacro
+	%macro validarCoordenadaLlena 0
+	
+		cmp byte[coordenadaFila],'0'
+		je .FILA0
+		cmp byte[coordenadaFila],'1'
+		je .FILA1
+		cmp byte[coordenadaFila],'2'
+		je .FILA2
+		.FILA0:
+			cmp byte[coordenadaColumna],'0'
+			je .VALIDA00
+			cmp byte[coordenadaColumna],'1'
+			je .VALIDA01
+			cmp byte[coordenadaColumna],'2'
+			je .VALIDA02
+		.FILA1:
+			cmp byte[coordenadaColumna],'0'
+			je .VALIDA10
+			cmp byte[coordenadaColumna],'1'
+			je .VALIDA11
+			cmp byte[coordenadaColumna],'2'
+			je .VALIDA12
+		.FILA2:
+			cmp byte[coordenadaColumna],'0'
+			je .VALIDA20
+			cmp byte[coordenadaColumna],'1'
+			je .VALIDA21
+			cmp byte[coordenadaColumna],'2'
+			je .VALIDA22
+		.VALIDA00:	
+			cmp byte[msgEspacio0x0],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA01:
+			cmp byte[msgEspacio0x1],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA02:
+			cmp byte[msgEspacio0x2],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA10:
+			cmp byte[msgEspacio1x0],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA11:
+			cmp byte[msgEspacio1x1],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA12:
+			cmp byte[msgEspacio1x2],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA20:
+			cmp byte[msgEspacio2x0],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA21:
+			cmp byte[msgEspacio2x1],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.VALIDA22:
+			cmp byte[msgEspacio2x2],' '
+			je .FINAL_VALIDA_COORDENADA_LLENA
+			jne .COORDENADA_LLENA
+		.COORDENADA_LLENA:
+			imprimeEnPantalla msgCoordenadaLlena,lenMsgCoordenadaLlena
+			imprimeEnPantalla msgEnter,lenMsgEnter
+			incrementarVariableNumerica errores
+		.FINAL_VALIDA_COORDENADA_LLENA:
+        %endmacro
+        %macro actualizarNumeral 2
+        	cmp byte[%1],' '
+        	je .SI_ES_VACIO
+        	jne .NO_ES_VACIO
+        	.SI_ES_VACIO:
+        		mov eax, 0
+        		mov [%2],eax
+        		jmp .FIN_ACTUALIZAR_NUMERAL
+        	.NO_ES_VACIO:
+        		mov eax,[%1]
+                	sub eax, 48
+			mov [%2],eax
+		.FIN_ACTUALIZAR_NUMERAL
+        %endmacro
+        %macro actualizarNumerales 0
+        	actualizarNumeral msgEspacio0x0, espacio0x0
+        	actualizarNumeral msgEspacio0x1, espacio0x1
+        	actualizarNumeral msgEspacio0x2, espacio0x2
+        	actualizarNumeral msgEspacio1x0, espacio1x0
+        	actualizarNumeral msgEspacio1x1, espacio1x1
+        	actualizarNumeral msgEspacio1x2, espacio1x2
+        	actualizarNumeral msgEspacio2x0, espacio2x0
+        	actualizarNumeral msgEspacio2x1, espacio2x1
+        	actualizarNumeral msgEspacio2x2, espacio2x2
+        %endmacro
+        %macro validarGane 3
+        	xor eax,eax
+        	mov eax,[%1]
+        	add eax, [%2]
+        	add eax, [%3]
+        	cmp dword[eax], 15
+        	jne .FINAL_VALIDAR_GANE
+        	.GANEVALIDO:
+        		incrementarVariableNumerica gane
+        		jmp .FINAL_VALIDAR_GANE
+        	.FINAL_VALIDAR_GANE:	
+        %endmacro
+        %macro validarGaneFinal 0
+        	mov eax, combinacionResultante
+        	mov cl, byte[msgEspacio0x0]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio0x1]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio0x2]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio1x0]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio1x1]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio1x2]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio2x0]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio2x1]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	inc eax
+        	mov cl, byte[msgEspacio2x2]
+        	cmp byte[eax], cl
+        	jne .VALIDAR_GANE_FINAL
+        	.NO_VALIDAR_GANE_FINAL:
+        		incrementarVariableNumerica gane
+        		jmp .FIN_VALIDAR_GANE_FINAL
+        	.VALIDAR_GANE_FINAL:
+        		imprimeEnPantalla msgSumaNoValida,lenMsgSumaNoValida
+			imprimeEnPantalla msgEnter,lenMsgEnter
+			inicializarVariables combinacion
+        	.FIN_VALIDAR_GANE_FINAL:
+        		
+        %endmacro
+       	%macro agregarNumeros 0
+        	cmp byte[coordenadaFila],'0'
+        	je .FILA_0
+        	cmp byte[coordenadaFila],'1'
+        	je .FILA_1
+        	cmp byte[coordenadaFila],'2'
+        	je .FILA_2
+        	.FILA_0:
+        		cmp byte[coordenadaColumna],'0'
+        		je .FILA_00
+        		cmp byte[coordenadaColumna],'1'
+        		je .FILA_01
+        		cmp byte[coordenadaColumna],'2'
+        		je .FILA_02
+        	.FILA_1:
+        		cmp byte[coordenadaColumna],'0'
+        		je .FILA_10
+        		cmp byte[coordenadaColumna],'1'
+        		je .FILA_11
+        		cmp byte[coordenadaColumna],'2'
+        		je .FILA_12
+        	.FILA_2:
+        		cmp byte[coordenadaColumna],'0'
+        		je .FILA_20
+        		cmp byte[coordenadaColumna],'1'
+        		je .FILA_21
+        		cmp byte[coordenadaColumna],'2'
+        		je .FILA_22
+        	.FILA_00:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio0x0],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_01:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio0x1],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_02:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio0x2],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_10:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio1x0],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_11:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio1x1],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_12:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio1x2],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_20:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio2x0],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_21:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio2x1],eax
+        		jmp .FIN_AGREGADO_NUMEROS
+        	.FILA_22:
+        		xor eax,eax
+        		mov eax,[numeral]
+        		mov [msgEspacio2x2],eax
+        	.FIN_AGREGADO_NUMEROS:
+        		
+        %endmacro
+        %macro validarSumatoriaInvalida 0
+        	actualizarNumerales
+        	mov eax,[espacio0x0]
+        	add eax, [espacio0x1]
+        	add eax, [espacio0x2]
+        	cmp dword[eax],15
+        	je .GANO_VALIDACION
+        	jne .NO_GANO_VALIDACION
+        	
+        	
+        %endmacro
+	%macro actualizarCombinacion 0
+		mov ebx,combinacion
+		mov al,' '
+		cmp al,byte[msgEspacio0x0]
+		jne .BORRA1
+		mov byte[ebx],al
+		.BORRA1:
+			inc ebx
+		cmp al,byte[msgEspacio0x1]
+		jne .BORRA2
+		mov byte[ebx],al
+		.BORRA2:
+			inc ebx
+		cmp al,byte[msgEspacio0x2]
+		jne .BORRA3
+		mov byte[ebx],al
+		.BORRA3:
+			inc ebx
+		cmp al,byte[msgEspacio1x0]
+		jne .BORRA4
+		mov byte[ebx],al
+		.BORRA4:
+			inc ebx
+		cmp al,byte[msgEspacio1x1]
+		jne .BORRA5
+		mov byte[ebx],al
+		.BORRA5:
+			inc ebx
+		cmp al,byte[msgEspacio1x2]
+		jne .BORRA6
+		mov byte[ebx],al
+		.BORRA6:
+			inc ebx
+		cmp al,byte[msgEspacio2x0]
+		jne .BORRA7
+		mov byte[ebx],al
+		.BORRA7:
+			inc ebx
+		cmp al,byte[msgEspacio2x1]
+		jne .BORRA8
+		mov byte[ebx],al
+		.BORRA8:
+			inc ebx
+		cmp al,byte[msgEspacio2x2]
+		jne .BORRA9
+		mov byte[ebx],al
+		.BORRA9:
+        %endmacro
+	
+	
+	
+	
+	
+	
+	
 	;objetivo de la macro: captura un dato ASCII ingresado por teclado por parte del usuario y almacena la entrada en la variable de memoria "coordenadas"
 	;ejemplo de funcionamiento: divideCordenadas
 	;ejemplo de uso:	    divideCoordenadas
@@ -143,11 +563,16 @@
                 add     eax, 48
 		mov     [%1],eax
         %endmacro
-
+        
+	%macro AsciiANumero 1
+		mov     eax, [%1]
+                sub     eax, 48
+		mov     [%1],eax
+        %endmacro
 	;objetivo de la macro: transfiere el contenido del primer y segundo parametro de valor ascii a numerico  
         ;ejemplo de funcionamiento: numeroAAscii destino,memoriaDecenas,memoriaUnidades                 
         ;ejemplo de uso: numeroAAscii numeroLetras, decenas,unidades                                 
-        %macro AsciiANumero 3
+        %macro AsciiANumero2 3
                 mov     eax, [%2]
                 sub     eax, 48
                 mov 	ebx,10
@@ -195,7 +620,20 @@
                 ;mov byte [edx], al
                 	
         %endmacro
-
+	%macro obtenerCombinacion2 2
+        
+		xor eax,eax				; Limpia registro ecx
+		xor ebx,ebx				; Limpia registro edx
+		mov eax, %1
+		mov ebx, %2
+		mov ecx,9
+        	.REPITA_COMBINACION:
+                	mov dl, byte [eax]
+                	mov byte [ebx], dl
+                	inc eax
+                	inc ebx
+                	loop .REPITA_COMBINACION
+        %endmacro
       	;objetivo de la macro: multiplicar un valor en una variable por un valor constante
         ;ejemplo de funcionamiento: multiplicar variable, numero
         ;ejemplo de uso:            multiplicar espacios, 5
