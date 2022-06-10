@@ -7,17 +7,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Si se vna a realizar nuevas macros para un proyecto definirlas aca
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	%macro inicializaVariableNumerica 1
-		xor eax, eax
-		mov eax,0
-		mov [%1],eax
-	%endmacro
+
+	;objetivo de la macro: Incrementa una variable nùmerica
+	;ejemplo de funcionamiento: incrementarVariableNumerica variableNumerica
+	;ejemplo de uso:	    incrementarVariableNumerica numeral
+	
 	%macro incrementarVariableNumerica 1
 		xor eax, eax
 		mov eax,[%1]
 		inc eax
 		mov [%1],eax
 	%endmacro
+	
+	
+	;objetivo de la macro: Inicia el cronòmetro
+	;ejemplo de funcionamiento: iniciarCronometro
+	;ejemplo de uso:	    iniciarCronometro
+	
 	%macro iniciarCronometro 0
 		mov  eax, 13       					;Interrupcion que toma el primer tiempo EPOCH 
 		xor rbx,rbx
@@ -25,6 +31,12 @@
 
 		mov dword [tiempo1],eax
 	%endmacro
+	
+	
+	;objetivo de la macro: Actualiza el cronòmetro
+	;ejemplo de funcionamiento: actualizarCronometro
+	;ejemplo de uso:	    actualizarCronometro
+	
 	%macro actualizarCronometro 0
 		mov  eax, 13       					;Interrupcion que toma el primer tiempo EPOCH 
 		xor rbx,rbx
@@ -42,6 +54,12 @@
 		sub ecx,eax						;Resta 120 - (tiempo2-tiempo1)
 		mov [tiempoTranscurrido],ecx
 	%endmacro
+	
+	
+	;objetivo de la macro: Divide la cantidad de tiempo en tres digitos
+	;ejemplo de funcionamiento: divideTiempoTranscurrido
+	;ejemplo de uso:	    divideTiempoTranscurrido
+	
 	%macro divideTiempoTranscurrido 0
 		xor edx,edx
 		mov eax, [tiempoTranscurrido]
@@ -57,6 +75,12 @@
 		div ecx
 		mov [centenas],edx
 	%endmacro
+	
+	
+	;objetivo de la macro: Valida si el numeral ingresado es un caracter permitido(solo enteros del 1 al 9)
+	;ejemplo de funcionamiento: validarNumeralValido
+	;ejemplo de uso:	    validarNumeralValido
+	
 	%macro validarNumeralValido 0
 		mov al, byte[numeral]
 		cmp al,'1'
@@ -82,6 +106,10 @@
 		incrementarVariableNumerica errores
 		.TERMINA_VALIDA_REPETICION:
         %endmacro
+        
+        ;objetivo de la macro: Valida si el numeral ingresado ya està en el tablero
+	;ejemplo de funcionamiento: validarRepeticion
+	;ejemplo de uso:	    validarRepeticion
         
 	%macro validarRepeticion 0
 		mov al, byte[numeral]
@@ -110,6 +138,11 @@
 			incrementarVariableNumerica errores
 		.TERMINA_VALIDA_REPETICION:
         %endmacro
+        
+        ;objetivo de la macro: Valida si la coordenada ingresada no està en el tablero de 3x3
+	;ejemplo de funcionamiento: validarCoordenadaInvalida
+	;ejemplo de uso:	    validarCoordenadaInvalida
+	
 	%macro validarCoordenadaInvalida 0
 		cmp byte[coordenadaFila],'0'
 		je .VALIDACIONCOLUMNA
@@ -132,6 +165,11 @@
 		.TERMINA_VALIDA_COORDENADA_INVALIDA:
 			
         %endmacro
+        
+        ;objetivo de la macro: Valida si la coordenada en la que se trata de ingresar el nùmero està llena, pues no se puede sobreescribir
+	;ejemplo de funcionamiento: validarCoordenadaLlena
+	;ejemplo de uso:	    validarCoordenadaLlena
+        
 	%macro validarCoordenadaLlena 0
 	
 		cmp byte[coordenadaFila],'0'
@@ -203,43 +241,10 @@
 			incrementarVariableNumerica errores
 		.FINAL_VALIDA_COORDENADA_LLENA:
         %endmacro
-        %macro actualizarNumeral 2
-        	cmp byte[%1],' '
-        	je .SI_ES_VACIO
-        	jne .NO_ES_VACIO
-        	.SI_ES_VACIO:
-        		mov eax, 0
-        		mov [%2],eax
-        		jmp .FIN_ACTUALIZAR_NUMERAL
-        	.NO_ES_VACIO:
-        		mov eax,[%1]
-                	sub eax, 48
-			mov [%2],eax
-		.FIN_ACTUALIZAR_NUMERAL
-        %endmacro
-        %macro actualizarNumerales 0
-        	actualizarNumeral msgEspacio0x0, espacio0x0
-        	actualizarNumeral msgEspacio0x1, espacio0x1
-        	actualizarNumeral msgEspacio0x2, espacio0x2
-        	actualizarNumeral msgEspacio1x0, espacio1x0
-        	actualizarNumeral msgEspacio1x1, espacio1x1
-        	actualizarNumeral msgEspacio1x2, espacio1x2
-        	actualizarNumeral msgEspacio2x0, espacio2x0
-        	actualizarNumeral msgEspacio2x1, espacio2x1
-        	actualizarNumeral msgEspacio2x2, espacio2x2
-        %endmacro
-        %macro validarGane 3
-        	xor eax,eax
-        	mov eax,[%1]
-        	add eax, [%2]
-        	add eax, [%3]
-        	cmp dword[eax], 15
-        	jne .FINAL_VALIDAR_GANE
-        	.GANEVALIDO:
-        		incrementarVariableNumerica gane
-        		jmp .FINAL_VALIDAR_GANE
-        	.FINAL_VALIDAR_GANE:	
-        %endmacro
+
+        ;objetivo de la macro: Valida si todos los nùmeros en el tablero son iguales a los de la combinacion ganadora
+	;ejemplo de funcionamiento: validarGaneFinal
+	;ejemplo de uso:	    validarGaneFinal
         %macro validarGaneFinal 0
         	mov eax, combinacionResultante
         	mov cl, byte[msgEspacio0x0]
@@ -287,6 +292,9 @@
         	.FIN_VALIDAR_GANE_FINAL:
         		
         %endmacro
+        ;objetivo de la macro: Agregar un nùmero al tablero en una fila y columna respectiva
+	;ejemplo de funcionamiento: agregarNumeros
+	;ejemplo de uso:	    agregarNumeros
        	%macro agregarNumeros 0
         	cmp byte[coordenadaFila],'0'
         	je .FILA_0
@@ -362,17 +370,11 @@
         	.FIN_AGREGADO_NUMEROS:
         		
         %endmacro
-        %macro validarSumatoriaInvalida 0
-        	actualizarNumerales
-        	mov eax,[espacio0x0]
-        	add eax, [espacio0x1]
-        	add eax, [espacio0x2]
-        	cmp dword[eax],15
-        	je .GANO_VALIDACION
-        	jne .NO_GANO_VALIDACION
-        	
-        	
-        %endmacro
+	
+	;objetivo de la macro: Cambia cada uno de los valores por imprimir desde la variable general que alberga la combinacion inicial
+	;ejemplo de funcionamiento: actualizarCombinacion
+	;ejemplo de uso:	    actualizarCombinacion
+	
 	%macro actualizarCombinacion 0
 		mov ebx,combinacion
 		mov al,' '
@@ -428,7 +430,7 @@
 	
 	
 	
-	;objetivo de la macro: captura un dato ASCII ingresado por teclado por parte del usuario y almacena la entrada en la variable de memoria "coordenadas"
+	;objetivo de la macro: Divide las coordenadas en un formato especifico separadas por comas hacia sus respectivas variables
 	;ejemplo de funcionamiento: divideCordenadas
 	;ejemplo de uso:	    divideCoordenadas
         %macro divideCoordenadas 0
@@ -459,7 +461,9 @@
                 mov     edx,     16             ; número de bytes a leer.
                 int     0x80
         %endmacro
-	
+	;objetivo de la macro: Ocultar uno de los caracteres del tablero aleatoriamente
+        ;ejemplo de funcionamiento: ocultarVariable
+        ;ejemplo de uso:            ocultarVariable
         %macro ocultarVariable 0
        		.VOLVER_A_OCULTAR:
        		random rand, 1,9
@@ -597,8 +601,8 @@
         %endmacro
 	
 	;objetivo de la macro: avanzar la cantidad de espacios del tercer parametro, en el string del segundo parametro y almacenar la 		palabra en el primer parametro
-        ;ejemplo de funcionamiento: obtenerPalabra variable, archivoAbierto, cantidadEspacios
-        ;ejemplo de uso:            obtenerPalabra palabra,archivoTXT,  24
+        ;ejemplo de funcionamiento: obtenerCombinacion variable, archivoAbierto, cantidadEspacios
+        ;ejemplo de uso:            obtenerCombinacion palabra,archivoTXT,  24
         %macro obtenerCombinacion 3
         
 		xor rcx,rcx				; Limpia registro ecx
@@ -620,6 +624,9 @@
                 ;mov byte [edx], al
                 	
         %endmacro
+        ;objetivo de la macro: Obtener cada uno de los caracteres de una secuencia de 9 caracteres y pasarla a otra variable
+        ;ejemplo de funcionamiento: obtenerCombinacion2 variableConCaracteres, variableSinInicializar
+        ;ejemplo de uso:            obtenerCombinacion2 combinacion,combinacion2
 	%macro obtenerCombinacion2 2
         
 		xor eax,eax				; Limpia registro ecx
@@ -667,6 +674,7 @@
                 mov     ecx,     entrada       ; dirección de memoria reservada para almacenar la entrada del teclado.
                 mov     edx,     8             ; número de bytes a leer.
                 int     0x80
+                
         %endmacro
 
 	;objetivo de la macro: abre un archivo para su posterior uso

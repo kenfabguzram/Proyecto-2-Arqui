@@ -19,11 +19,6 @@ section .data
 			db ' 			2. Salir',10
 	lenMsgMenu	equ $ - msgMenu
 	
-	msgMenu2		db '	       		Bienvenido al Juego de Sudoku',10,10
-		        db '			Seleccione una opcion:',10
-			db ' 			1. Jugar nuevamente',10
-			db ' 			2. Salir',10
-	lenMsgMenu2	equ $ - msgMenu2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	msgBienvenida     db '	       		Bienvenido al Juego de Sudoku',10,10
 
@@ -168,15 +163,22 @@ _start:
 	cmp byte [entrada],'1'
 	jne _start
 	
+	;se inicializan todas las variables en el tablero al azar y el tiempo del cronòmetro
+	
 	abreArchivo combinaciones
         leeArchivo contenidoArchivo
         random espacios,0,7
         multiplicar espacios,10	
         obtenerCombinacion combinacion,contenidoArchivo,[espacios]
+        
+        ;guarda la combinacion del gane en una variable combinaciòn resultante
+        
         obtenerCombinacion2 combinacion, combinacionResultante
         cierraArchivo combinaciones
         JUGAR:
 	inicializarVariables combinacion
+	
+	;se ocultan los nùmeros que el usuario debe ingresar
 	
 	OCULTAR_VARIABLEA:
 		ocultarVariable
@@ -188,8 +190,13 @@ _start:
 		ocultarVariable
 	OCULTAR_VARIABLEE:
 		ocultarVariable
+		
+	;se actualiza el tablero
+	
 	actualizarCombinacion
 	iniciarCronometro
+	
+	;se inicializan variables numericas
 	
 	xor eax, eax
 	mov eax,0
@@ -197,7 +204,13 @@ _start:
 	xor eax, eax
 	mov eax,0
 	mov [numerosAgregados],eax
+	
+	;loop principal del programa
+	
 MENU_OPCION1:
+
+	;se imprimen todos los mensajes iniciales y variables char
+	
 	imprimeEnPantalla msgBienvenida, lenMsgBienvenida
 	imprimeEnPantalla msgNumerosColumna,lenMsgNumerosColumna
 	imprimeEnPantalla msgEnter,lenMsgEnter
@@ -230,10 +243,12 @@ MENU_OPCION1:
 	imprimeEnPantalla msgEspacio2x2,1
 	imprimeEnPantalla msgFinalFila,lenMsgFinalFila
 	imprimeEnPantalla msgEnter,lenMsgEnter
-	
+	;Se leen las coordenadas
 	imprimeEnPantalla msgIntroCoordenadas,lenMsgIntroCoordenadas
 	leeCoordenadas
 	divideCoordenadas
+	
+	;se actualiza el cronometro
 	
 	imprimeEnPantalla msgInicialTiempoRestante, lenMsgInicialTiempoRestante
 	actualizarCronometro
@@ -243,8 +258,14 @@ MENU_OPCION1:
 	numeroAAscii unidades
 	numeroAAscii decenas
 	numeroAAscii centenas
+	
+	;se valida si el tiempo es menor a 0, se hace esta comparaciòn debido a que cuando el tiempo del cronometro termina, se devuelve desde el caracter 2 en las centenas
+	
 	cmp byte[centenas],'2'
 	je PERDIO
+	
+	;si es mayor a 0 se imprime el tiempo real y sigue el transcurso del juego
+	
 	imprimeEnPantalla centenas,1
 	imprimeEnPantalla decenas,1
 	imprimeEnPantalla unidades,1
@@ -252,14 +273,22 @@ MENU_OPCION1:
 	imprimeEnPantalla msgEnter,lenMsgEnter
 	imprimeEnPantalla msgInicialMensaje, lenMsgInicialMensaje
 	imprimeEnPantalla msgEnter,lenMsgEnter
+	
+	;Se validan los errores y se envia el mensaje respectivo si se incurre en alguno de ellos, ademàs si se incurre en uno se aumenta la variable errores que determina si el numero se agrega o no
+	
 	validarRepeticion
 	validarCoordenadaInvalida
 	validarCoordenadaLlena
 	VALIDA_NUMERAL:
 	validarNumeralValido
 	
+	;si no hay errores se agrega el numero
+	
 	cmp byte[errores],0
 	je AGREGAR_NUMEROS
+	
+	;si hay errores se reinicia la variable errores y se vuelve al loop
+	
 	xor eax, eax
 	mov eax,0
 	mov [errores],eax
@@ -271,12 +300,19 @@ MENU_OPCION1:
 	imprimeEnPantalla msgEnter,lenMsgEnter
 	jmp MENU_OPCION1
 AGREGAR_NUMEROS:
+
+	;Si no hay erres se agrega el numero al tablero y se aumenta la cantidad de numeros agregados
+	;si la cantidad de numeros agregados es igual a 5 entonces se valida el gane
+	
 	agregarNumeros
 	incrementarVariableNumerica numerosAgregados
 	cmp byte[numerosAgregados],5
 	je VALIDO_EL_GANE_FINAL
 	jne TERMINO_DE_AGREGAR_NUMEROS
 VALIDO_EL_GANE_FINAL:
+
+	;si los numeros en el tablero son equivalentes a los de la variable guardada con la combinacion entonces gana, si no vuelve al loop
+	
 	xor eax, eax
 	mov eax,0
 	mov [numerosAgregados],eax
@@ -288,15 +324,16 @@ VALIDO_EL_GANE_FINAL:
 	je GANO
 	jmp TERMINO_DE_AGREGAR_NUMEROS
 GANO:
-
+	;Termina de imprimir el mensaje de gane y sale del juego
 	imprimeEnPantalla msgFinalGane,lenMsgFinalGane
 	imprimeEnPantalla msgEnter,lenMsgEnter
 	imprimeEnPantalla msgEsc, lenMsgEsc
 	imprimeEnPantalla msgEnter,lenMsgEnter
 	imprimeEnPantalla msgDivision,lenMsgDivision
 	imprimeEnPantalla msgEnter,lenMsgEnter
-	jmp LOOP_PERDIDA
+	jmp FIN
 PERDIO:
+	;Termina de imprimir el mensaje de perdida y sale del juego
 	imprimeEnPantalla msgCero,lenMsgCero
 	imprimeEnPantalla msgCero,lenMsgCero
 	imprimeEnPantalla msgCero,lenMsgCero
@@ -310,16 +347,7 @@ PERDIO:
 	imprimeEnPantalla msgEnter,lenMsgEnter
 	imprimeEnPantalla msgDivision,lenMsgDivision
 	imprimeEnPantalla msgEnter,lenMsgEnter
-LOOP_PERDIDA:
-	imprimeEnPantalla msgMenu2, lenMsgMenu2
-	
-	leeTeclado
-	cmp byte [entrada],'2'
-	je FIN
-	cmp byte [entrada],'1'
-	je JUGAR
-	jmp LOOP_PERDIDA
-
 
 FIN:	
+	;sale del juego
 	salir
